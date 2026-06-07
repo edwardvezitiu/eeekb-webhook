@@ -114,6 +114,7 @@ def webhook():
 
     try:
         payload = request.get_json(force=True)
+        print(f"DEBUG payload fields: {payload.get('data', {}).get('fields', [])}")
     except Exception:
         return jsonify({"error": "Invalid JSON"}), 400
 
