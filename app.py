@@ -8,7 +8,7 @@ app = Flask(__name__)
 # ── Config ────────────────────────────────────────────────────────────────────
 GROQ_API_KEY    = os.environ["GROQ_API_KEY"]
 RESEND_API_KEY  = os.environ["RESEND_API_KEY"]
-BUSINESS_EMAIL  = "hello@eeekb.com"
+BUSINESS_EMAIL  = "edwardvezitiu@yahoo.com"
 BRAND_NAME      = "EEE Korean Beauty Ltd"
 WEBHOOK_SECRET  = os.environ.get("WEBHOOK_SECRET", "")
 
