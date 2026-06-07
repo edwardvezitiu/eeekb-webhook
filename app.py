@@ -89,14 +89,18 @@ def parse_tally(payload):
     fields = payload.get("data", {}).get("fields", [])
     data = {}
     for field in fields:
-        label = field.get("label", "").lower()
+        label = field.get("label", "").lower().strip()
         value = field.get("value", "")
         if not value:
             continue
         if "email" in label:
             data["email"] = value
+        elif label == "first name":
+            data["first_name"] = value
+        elif label == "last name":
+            data["last_name"] = value
         elif "name" in label:
-            data["name"] = value
+            data["first_name"] = value
         elif any(w in label for w in ["message", "comment", "feedback", "question", "enquiry"]):
             data["message"] = value
         else:
@@ -120,7 +124,7 @@ def webhook():
 
     parsed  = parse_tally(payload)
     email   = parsed.get("email")
-    name    = parsed.get("first name", parsed.get("name", "there"))
+    name    = parsed.get("first_name", "there")
 
     lines = [f"{k.title()}: {v}" for k, v in parsed.items()]
     submission_text = "\n".join(lines)
