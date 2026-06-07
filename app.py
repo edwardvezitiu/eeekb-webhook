@@ -6,15 +6,15 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 # ── Config ────────────────────────────────────────────────────────────────────
-GEMINI_API_KEY  = os.environ["GEMINI_API_KEY"]
+GROQ_API_KEY    = os.environ["GROQ_API_KEY"]
 RESEND_API_KEY  = os.environ["RESEND_API_KEY"]
 BUSINESS_EMAIL  = "hello@eeekb.com"
 BRAND_NAME      = "EEE Korean Beauty Ltd"
-WEBHOOK_SECRET  = os.environ.get("WEBHOOK_SECRET", "")  # optional but recommended
+WEBHOOK_SECRET  = os.environ.get("WEBHOOK_SECRET", "")
 
-# ── Gemini ────────────────────────────────────────────────────────────────────
+# ── Groq ──────────────────────────────────────────────────────────────────────
 
-def ask_gemini(submission_text):
+def ask_groq(submission_text):
     prompt = f"""You are the customer support AI for {BRAND_NAME}, a Korean beauty brand.
 A customer has submitted the following message via the website contact form:
 
@@ -42,15 +42,20 @@ Rules:
 """
 
     r = requests.post(
-        f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}",
-        headers={"Content-Type": "application/json"},
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json",
+        },
         json={
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {"temperature": 0.2, "maxOutputTokens": 1000},
+            "model": "llama3-8b-8192",
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.2,
+            "max_tokens": 1000,
         },
     )
     r.raise_for_status()
-    raw = r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+    raw = r.json()["choices"][0]["message"]["content"].strip()
     raw = raw.replace("```json", "").replace("```", "").strip()
     return json.loads(raw)
 
@@ -102,7 +107,6 @@ def parse_tally(payload):
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    # Optional secret check
     if WEBHOOK_SECRET:
         incoming = request.headers.get("X-Tally-Signature", "")
         if incoming != WEBHOOK_SECRET:
@@ -113,24 +117,21 @@ def webhook():
     except Exception:
         return jsonify({"error": "Invalid JSON"}), 400
 
-    parsed   = parse_tally(payload)
-    email    = parsed.get("email")
-    name     = parsed.get("name", "there")
-    message  = parsed.get("message", "")
+    parsed  = parse_tally(payload)
+    email   = parsed.get("email")
+    name    = parsed.get("name", "there")
 
-    # Build readable submission text for Gemini
     lines = [f"{k.title()}: {v}" for k, v in parsed.items()]
     submission_text = "\n".join(lines)
 
     if not submission_text.strip():
         return jsonify({"status": "skipped", "reason": "empty submission"}), 200
 
-    # Ask Gemini
     try:
-        result = ask_gemini(submission_text)
+        result = ask_groq(submission_text)
     except Exception as e:
-        print(f"Gemini error: {e}")
-        return jsonify({"error": "Gemini failed"}), 500
+        print(f"Groq error: {e}")
+        return jsonify({"error": "Groq failed"}), 500
 
     category  = result.get("category", "general")
     priority  = result.get("priority", "low")
@@ -144,7 +145,7 @@ def webhook():
     if category == "auto_reply" and email and reply_txt:
         customer_html = f"""
 <p>Hi {name},</p>
-{('<p>' + '</p><p>'.join(reply_txt.split(chr(10))) + '</p>')}
+<p>{reply_txt.replace(chr(10), '</p><p>')}</p>
 <br>
 <p style="color:#888;font-size:12px;">
   This is an automated response to your recent enquiry. A member of our team is also being notified.
