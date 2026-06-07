@@ -119,7 +119,7 @@ def webhook():
 
     parsed  = parse_tally(payload)
     email   = parsed.get("email")
-    name    = parsed.get("name", "there")
+    name    = parsed.get("first name", parsed.get("name", "there"))
 
     lines = [f"{k.title()}: {v}" for k, v in parsed.items()]
     submission_text = "\n".join(lines)
