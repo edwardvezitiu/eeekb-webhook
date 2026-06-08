@@ -1,9 +1,21 @@
 import os
 import json
+import hmac
+import hashlib
 import requests
 from flask import Flask, request, jsonify
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
+
+# ── Rate limiting ─────────────────────────────────────────────────────────────
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://",
+)
 
 # ── Config ────────────────────────────────────────────────────────────────────
 GROQ_API_KEY    = os.environ["GROQ_API_KEY"]
@@ -53,6 +65,7 @@ Rules:
             "temperature": 0.2,
             "max_tokens": 1000,
         },
+        timeout=15,  # don't hang forever if Groq is slow
     )
     r.raise_for_status()
     raw = r.json()["choices"][0]["message"]["content"].strip()
@@ -78,6 +91,7 @@ def send_email(to, subject, html_body, reply_to=None):
             "Content-Type": "application/json",
         },
         json=payload,
+        timeout=10,
     )
     r.raise_for_status()
     return r.json()
@@ -107,20 +121,56 @@ def parse_tally(payload):
             data[label] = value
     return data
 
+# ── Signature verification ────────────────────────────────────────────────────
+
+def verify_tally_signature(request):
+    """
+    Verify the Tally webhook signature using HMAC-SHA256.
+    Tally sends: X-Tally-Signature: sha256=<hex_digest>
+    We compute HMAC of the raw request body with WEBHOOK_SECRET and compare.
+    Returns True if valid (or if no secret is configured).
+    """
+    if not WEBHOOK_SECRET:
+        return True  # no secret set, skip verification
+
+    incoming = request.headers.get("X-Tally-Signature", "")
+    if not incoming.startswith("sha256="):
+        return False
+
+    raw_body = request.get_data()
+    expected = "sha256=" + hmac.new(
+        WEBHOOK_SECRET.encode("utf-8"),
+        raw_body,
+        hashlib.sha256,
+    ).hexdigest()
+
+    # constant-time compare to prevent timing attacks
+    return hmac.compare_digest(incoming, expected)
+
 # ── Webhook endpoint ──────────────────────────────────────────────────────────
 
 @app.route("/webhook", methods=["POST"])
+@limiter.limit("10 per minute; 100 per hour")  # per IP
 def webhook():
-    if WEBHOOK_SECRET:
-        incoming = request.headers.get("X-Tally-Signature", "")
-        if incoming != WEBHOOK_SECRET:
-            return jsonify({"error": "Unauthorized"}), 401
 
+    # ── Signature check ───────────────────────────────────────────────────────
+    if not verify_tally_signature(request):
+        print("❌ Signature verification failed")
+        return jsonify({"error": "Unauthorized"}), 401
+
+    # ── Parse payload ─────────────────────────────────────────────────────────
     try:
         payload = request.get_json(force=True)
+        if not payload:
+            return jsonify({"error": "Empty payload"}), 400
         print(f"DEBUG payload fields: {payload.get('data', {}).get('fields', [])}")
     except Exception:
         return jsonify({"error": "Invalid JSON"}), 400
+
+    # ── Basic spam guard: reject if no fields at all ──────────────────────────
+    fields = payload.get("data", {}).get("fields", [])
+    if not fields:
+        return jsonify({"status": "skipped", "reason": "no fields in payload"}), 200
 
     parsed  = parse_tally(payload)
     email   = parsed.get("email")
@@ -132,11 +182,28 @@ def webhook():
     if not submission_text.strip():
         return jsonify({"status": "skipped", "reason": "empty submission"}), 200
 
+    # ── Groq triage ───────────────────────────────────────────────────────────
     try:
         result = ask_groq(submission_text)
+    except requests.exceptions.Timeout:
+        print("❌ Groq timed out")
+        # fail gracefully: flag to business without auto-reply
+        result = {
+            "category": "flag_only",
+            "reason": "AI triage timed out — needs manual review",
+            "priority": "medium",
+            "customer_reply": None,
+            "internal_summary": f"Triage failed (timeout). Original message: {submission_text[:300]}",
+        }
     except Exception as e:
-        print(f"Groq error: {e}")
-        return jsonify({"error": "Groq failed"}), 500
+        print(f"❌ Groq error: {e}")
+        result = {
+            "category": "flag_only",
+            "reason": "AI triage failed — needs manual review",
+            "priority": "medium",
+            "customer_reply": None,
+            "internal_summary": f"Triage failed ({type(e).__name__}). Original message: {submission_text[:300]}",
+        }
 
     category  = result.get("category", "general")
     priority  = result.get("priority", "low")
