@@ -20,7 +20,7 @@ limiter = Limiter(
 # ── Config ────────────────────────────────────────────────────────────────────
 GROQ_API_KEY    = os.environ["GROQ_API_KEY"]
 RESEND_API_KEY  = os.environ["RESEND_API_KEY"]
-BUSINESS_EMAIL  = "edwardvezitiu@yahoo.com"
+BUSINESS_EMAIL = "hello@eeekoreanbeauty.com"
 BRAND_NAME      = "EEE Korean Beauty Ltd"
 WEBHOOK_SECRET  = os.environ.get("WEBHOOK_SECRET", "")
 
