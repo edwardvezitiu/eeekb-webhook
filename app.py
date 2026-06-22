@@ -76,7 +76,7 @@ Rules:
 
 def send_email(to, subject, html_body, reply_to=None):
     payload = {
-        "from": f"{BRAND_NAME} <onboarding@resend.dev>",
+       "from": f"{BRAND_NAME} <hello@eeekoreanbeauty.com>",
         "to": [to],
         "subject": subject,
         "html": html_body,
