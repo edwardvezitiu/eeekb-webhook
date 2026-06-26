@@ -24,6 +24,48 @@ BUSINESS_EMAIL = "hello@eeekoreanbeauty.com"
 BRAND_NAME      = "EEE Korean Beauty Ltd"
 WEBHOOK_SECRET  = os.environ.get("WEBHOOK_SECRET", "")
 
+# ── Product facts (the ONLY source of truth the AI may quote from) ────────────
+# Keep INCI lists verbatim from index.html. If you update product formulas on the
+# site, mirror the change here so the AI doesn't drift.
+PRODUCT_FACTS = """
+PRODUCT CATALOGUE — these are the ONLY products sold by EEE Korean Beauty Ltd.
+Do NOT invent products, ingredients, claims, prices, or benefits beyond what is listed below.
+
+1. Collagen Enhancing Pore Refining Ampoule — £25
+   Hero ingredients (consumer language): Collagen, Ginseng, Camellia Extract, Hyaluronic Acid.
+   Targets: appearance of skin firmness, refined pores, hydration, lightweight finish.
+   Full INCI: Water, Glycerin, Butylene Glycol, Helianthus Annuus (Sunflower) Seed Oil, Propanediol, Hydroxyethyl Acrylate/Sodium Acryloyldimethyl Taurate Copolymer, C12-14 Pareth-12, Acrylates/C10-30 Alkyl Acrylate Crosspolymer, Caprylyl Glycol, Panax Ginseng Root Extract, Tromethamine, Ethylhexylglycerin, Adenosine, Caprylic/Capric Triglyceride, Disodium EDTA, 1,2-Hexanediol, Polysorbate 60, Sorbitan Isostearate, Tocopheryl Nicotinate, Sodium Hyaluronate, Fragrance, Hydrolyzed Extensin, Camellia Japonica Flower Extract, Soluble Collagen, Cyanocobalamin, Ethyl Hexanediol.
+
+2. Collagen Enhancing Pore Refining Cream — £20
+   Hero ingredients: Collagen, Ginseng, Camellia Extract, Hyaluronic Acid.
+   Targets: firmer-looking skin, smoother texture, long-lasting hydration; lightweight cream finish.
+   Full INCI: Water, Caprylic/Capric Triglyceride, Triethylhexanoin, Glycerin, Butylene Glycol, Cetearyl Alcohol, Hydroxyethyl Acrylate/Sodium Acryloyldimethyl Taurate Copolymer, Propanediol, Cetearyl Olivate, Cetearyl Glucoside, Acrylates/C10-30 Alkyl Acrylate Crosspolymer, Sorbitan Olivate, Caprylyl Glycol, Sorbitan Isostearate, Polysorbate 60, Panax Ginseng Root Extract, Tromethamine, Ethylhexylglycerin, Adenosine, 1,2-Hexanediol, Disodium EDTA, Tocopheryl Nicotinate, Sodium Hyaluronate, Fragrance, Camellia Japonica Flower Extract, Hydrolyzed Extensin, Soluble Collagen, Cyanocobalamin, Ethyl Hexanediol.
+
+3. Dark Spot Brightening Ampoule — £25
+   Hero ingredients: Niacinamide, Rice Extract, Coix Seed Extract, Vitamin C derivatives.
+   Targets: even skin tone, visible radiance, lightweight hydration.
+   Full INCI: Water, Glycerin, Butylene Glycol, Niacinamide, Propanediol, Acrylates/C10-30 Alkyl Acrylate Crosspolymer, Tromethamine, C12-14 Pareth-12, Caprylyl Glycol, Ethylhexylglycerin, Ascorbyl Tetraisopalmitate, Disodium EDTA, Alcohol, Coix Lacryma-Jobi Ma-yuen Seed Extract, Fragrance, Acacia Senegal Gum, Caprylic/Capric Triglyceride, 1,2-Hexanediol, Oryza Sativa (Rice) Extract, Sodium Carbonate, Ascorbic Acid, Tocopherol, Xanthophylls.
+
+4. Dark Spot Brightening Cream — £20
+   Hero ingredients: Niacinamide, Rice Extract, Coix Seed Extract, Vitamin C derivatives.
+   Targets: even tone, brighter look, daily hydration.
+   Full INCI: Water, Butylene Glycol, Glycerin, Caprylic/Capric Triglyceride, Triethylhexanoin, Niacinamide, Cetearyl Alcohol, Propanediol, Hydroxyethyl Acrylate/Sodium Acryloyldimethyl Taurate Copolymer, Cetearyl Olivate, Sorbitan Olivate, Cetearyl Glucoside, Acrylates/C10-30 Alkyl Acrylate Crosspolymer, Caprylyl Glycol, Tromethamine, Ascorbyl Tetraisopalmitate, Allantoin, Ethylhexylglycerin, Sorbitan Isostearate, Disodium EDTA, Fragrance, Alcohol, Coix Lacryma-Jobi Ma-yuen Seed Extract, Acacia Senegal Gum, 1,2-Hexanediol, Oryza Sativa (Rice) Extract, Sodium Carbonate, Ascorbic Acid, Tocopherol, Xanthophylls.
+
+5. Soothing Hydration Serum — £25
+   Hero ingredients: Centella Asiatica (Cica), Mung Bean, Mugwort, Malachite Extract, Hyaluronic Acid.
+   Targets: calmer-looking skin, hydration, comfort for sensitive skin.
+   Full INCI: Water, Butylene Glycol, Glycereth-26, Glycerin, Betaine, Propanediol, Hydroxyethyl Acrylate/Sodium Acryloyldimethyl Taurate Copolymer, C12-14 Pareth-12, Acrylates/C10-30 Alkyl Acrylate Crosspolymer, Octyldodeceth-16, Tromethamine, Caprylyl Glycol, Ethylhexylglycerin, Caprylic/Capric Triglyceride, Disodium EDTA, 1,2-Hexanediol, Polysorbate 60, Sorbitan Isostearate, Tocopheryl Nicotinate, Trisodium Ethylenediamine Disuccinate, Phaseolus Radiatus Seed Extract, Sodium Hyaluronate, Fragrance, Malachite Extract, Artemisia Princeps Leaf Extract, Centella Asiatica Extract, Arginine, Asiaticoside, Asiatic Acid, Madecassoside, Madecassic Acid.
+
+6. Soothing Hydration Cream — £20
+   Hero ingredients: Centella Asiatica (Cica), Mung Bean, Mugwort, Hyaluronic Acid.
+   Targets: soothes, hydrates, comforts; suits sensitive skin.
+
+NOTES ON CLAIMS (UK cosmetic regulations apply):
+- Use "helps improve the appearance of…" / "supports the look of…" language. Never claim to treat, cure, or prevent any condition.
+- The full INCI lists contain Fragrance and (in the Dark Spot range) Alcohol. If a customer asks about either, answer truthfully — do not hide it.
+- If asked about an ingredient and you are not 100% sure whether it is in the product, DO NOT GUESS. Set category=flag_only and let a human reply.
+"""
+
 # ── Groq ──────────────────────────────────────────────────────────────────────
 
 def ask_groq(submission_text):
@@ -33,6 +75,8 @@ A customer has submitted the following message via the website contact form:
 ---
 {submission_text}
 ---
+
+{PRODUCT_FACTS}
 
 Respond ONLY with a valid JSON object — no preamble, no markdown, no backticks. Use this exact structure:
 
@@ -46,11 +90,18 @@ Respond ONLY with a valid JSON object — no preamble, no markdown, no backticks
 
 Rules:
 - auto_reply: simple complaints, refund requests, order issues, basic product questions — AI handles it, but still flag to business
-- flag_only: bugs, partnership enquiries, legal issues, media/press, anything requiring a human decision — do NOT auto-reply
+- flag_only: bugs, partnership enquiries, legal issues, media/press, allergy/medical questions, ingredient questions you cannot answer with 100% certainty from PRODUCT CATALOGUE above, anything requiring a human decision — do NOT auto-reply
 - general: compliments, general feedback, surveys — log and flag lightly
 - Tone for customer replies: friendly, warm, casual — represent {BRAND_NAME} well
 - Always sign off customer replies as "The {BRAND_NAME} Team"
-- Mark priority HIGH if it involves money, legal, urgent complaints, bugs affecting purchases, or partnership opportunities
+- Mark priority HIGH if it involves money, legal, urgent complaints, bugs affecting purchases, partnership opportunities, or any allergy/medical concern
+- GROUNDING RULES (critical):
+  * Only mention ingredients, benefits, prices, or claims that appear in PRODUCT CATALOGUE above.
+  * NEVER invent ingredients. If the customer asks about an ingredient not listed for the product they named, set category=flag_only.
+  * If the customer asks about a product you do not see in PRODUCT CATALOGUE, set category=flag_only.
+  * Prefer "hero ingredients" language for friendly replies; only quote full INCI if the customer explicitly asks for the full ingredients list.
+  * Use UK-compliant cosmetic language: "helps improve the appearance of…", "supports the look of…". Never claim to treat or cure conditions.
+"""
 """
 
     r = requests.post(
