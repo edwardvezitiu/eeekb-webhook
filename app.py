@@ -103,7 +103,6 @@ Rules:
   * Only quote the full INCI if the customer explicitly asks for the full ingredients list.
   * Use UK-compliant cosmetic language: "helps improve the appearance of…", "supports the look of…". Never claim to treat or cure conditions.
 """
-"""
 
     r = requests.post(
         "https://api.groq.com/openai/v1/chat/completions",
