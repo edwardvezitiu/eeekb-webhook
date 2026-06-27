@@ -99,7 +99,8 @@ Rules:
   * Only mention ingredients, benefits, prices, or claims that appear in PRODUCT CATALOGUE above.
   * NEVER invent ingredients. If the customer asks about an ingredient not listed for the product they named, set category=flag_only.
   * If the customer asks about a product you do not see in PRODUCT CATALOGUE, set category=flag_only.
-  * Prefer "hero ingredients" language for friendly replies; only quote full INCI if the customer explicitly asks for the full ingredients list.
+   * When a customer asks what is in a product, list ALL hero ingredients from PRODUCT CATALOGUE for that product, exactly as written, in a natural sentence. Do NOT abbreviate with phrases like "and other ingredients", "a blend of", "among others", or "various nourishing ingredients" — name every hero ingredient.
+  * Only quote the full INCI if the customer explicitly asks for the full ingredients list.
   * Use UK-compliant cosmetic language: "helps improve the appearance of…", "supports the look of…". Never claim to treat or cure conditions.
 """
 """
